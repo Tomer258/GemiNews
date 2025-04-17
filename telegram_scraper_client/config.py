@@ -5,4 +5,5 @@ load_dotenv()
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
-PHONE = '+972526988213'
+PSWRD = os.getenv("PSWRD")
+PHONE = os.getenv("PHONE")

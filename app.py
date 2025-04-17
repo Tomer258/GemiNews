@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    print(TelegramScraper.hello())
+    TelegramScraper.load_scraper()
     return 'Hello, Flask!'
 
 if __name__ == '__main__':

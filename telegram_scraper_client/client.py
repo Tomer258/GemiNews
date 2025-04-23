@@ -3,6 +3,7 @@ from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.sessions import StringSession
 from .config import API_ID, API_HASH, PHONE,PSWRD,STRING_SESSION
+from telethon.tl.types import Channel, Chat
 
 
 class MyTelegramClient:
@@ -32,9 +33,20 @@ class MyTelegramClient:
 
 
     async def list_my_groups(self):
-        print(">>> Fetching groups...")
         dialogs = await self.client.get_dialogs()
-        return [
-            {"id": d.id, "name": d.name}
-            for d in dialogs if d.is_group
+        groups_and_channels = [
+            {
+                "id": dialog.entity.id,
+                "name": dialog.name,
+                "username": getattr(dialog.entity, "username", None),
+                "type": (
+                    "channel" if getattr(dialog.entity, "broadcast", False)
+                    else "megagroup" if getattr(dialog.entity, "megagroup", False)
+                    else "group"
+                )
+            }
+            for dialog in dialogs
+            if isinstance(dialog.entity, (Channel, Chat))
         ]
+
+        return groups_and_channels

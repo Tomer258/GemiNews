@@ -1,13 +1,13 @@
-from telethon.sync import TelegramClient, events
+from telethon.sync import TelegramClient
 from telethon.errors import SessionPasswordNeededError
-from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.sessions import StringSession
 from .config import API_ID, API_HASH, PHONE,PSWRD,STRING_SESSION
 from telethon.tl.types import Channel, Chat
+from datetime import datetime, timezone, timedelta
 
 
 class MyTelegramClient:
-    def __init__(self, session_name="session"):
+    def __init__(self):
         self.client = TelegramClient(StringSession(STRING_SESSION), API_ID, API_HASH)
 
     async def start(self):
@@ -50,3 +50,23 @@ class MyTelegramClient:
         ]
 
         return groups_and_channels
+
+    async def get_recent_messages(self, entity, hours=24):
+        """
+        Fetch messages from the last day for a given group/channel.
+        """
+        now = datetime.now(timezone.utc)
+        since = now - timedelta(hours=hours)
+
+        messages = []
+        async for message in self.client.iter_messages(entity):
+            if message.date < since:
+                break  # No need to continue older messages
+            if message.text:
+                messages.append({
+                    "id": message.id,
+                    "text": message.text,
+                    "date": message.date.isoformat()
+                })
+
+        return messages

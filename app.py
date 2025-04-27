@@ -1,10 +1,13 @@
 from quart import Quart, jsonify
 from telegram_scraper_client.client import MyTelegramClient
 import logging
-import asyncio
+
+
 
 app = Quart(__name__)
-telegram = MyTelegramClient(session_name="session")
+telegram = MyTelegramClient()
+groups =[]
+result = {}
 
 # Shared status message
 status_message = {"message": "Waiting for groups..."}
@@ -38,6 +41,7 @@ async def get_status():
 async def get_groups():
     logging.info("Starting to fetch groups...")
     try:
+        global groups
         groups = await telegram.list_my_groups()
     except Exception as e:
         logging.error(f"Failed to fetch groups: {e}")
@@ -49,6 +53,25 @@ async def get_groups():
     else:
         logging.error("No groups found")
         return jsonify({"error": "No groups found"}), 404
+
+
+@app.route('/msgFromGroups')
+async def get_msg_from_groups():
+    try:
+        global result
+
+        for group in groups:
+            group_id = group['id']
+            group_name = group['name']
+            identifier = group_name or str(group_id)  # fallback if no name
+
+            messages = await telegram.get_recent_messages(group_id)
+            result[identifier] = messages
+
+        return jsonify({"result": result}), 200
+    except Exception as e:
+        logging.error(f"Failed to fetch msgs: {e}")
+
 
 
 

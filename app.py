@@ -1,8 +1,10 @@
-from quart import Quart, jsonify
+from quart import Quart, jsonify,render_template_string
 from telegram_scraper_client.client import MyTelegramClient
 import logging
 from db import db, connect_db, disconnect_db
 from datetime import datetime
+from preprocess_model import summarize_json_dict_as_string
+import asyncio
 
 
 
@@ -96,6 +98,136 @@ async def get_msg_from_groups():
         return jsonify({"result": result}), 200
     except Exception as e:
         logging.error(f"Failed to fetch msgs: {e}")
+
+
+def batch_groups(groups, batch_size=5):
+    for i in range(0, len(groups), batch_size):
+        yield groups[i:i + batch_size]
+
+
+@app.route('/result')
+async def get_summarize():
+    current_summary = None
+    try:
+        groups = await telegram.list_my_groups()
+
+        # Filter unwanted groups
+        filtered_groups = [
+            group for group in groups
+            if group['id'] != 2037759911
+        ]
+
+        logging.info(f"Fetched {len(filtered_groups)} groups after filtering.")
+
+        # Break into batches of 5
+        batches = list(batch_groups(filtered_groups, batch_size=5))
+
+        logging.info(f"Split into {len(batches)} batches of 5 groups each.")
+
+        batch_number = 1
+
+        for batch in batches:
+            logging.info(f"Processing batch {batch_number} / {len(batches)}...")
+
+            batch_summaries = []
+
+            for group in batch:
+                group_id = group['id']
+                group_name = group['name']
+                identifier = group_name or str(group_id)
+
+                # Fetch messages for the group
+                messages = await telegram.get_recent_messages(group_id)
+
+                group_data = {
+                    "result": {
+                        identifier: messages
+                    }
+                }
+
+                try:
+                    # Summarize this group
+                    group_summary = summarize_json_dict_as_string(group_data)
+                    batch_summaries.append(group_summary)
+
+                    logging.info(f"Summarized group: {identifier}")
+
+                except Exception as e:
+                    logging.error(f"Failed to summarize group {identifier}: {e}")
+
+            # Merge all group summaries in the batch into one text
+            combined_batch_text = "\n\n".join(batch_summaries)
+
+            # Create a "batch combine" prompt
+            combined_prompt = f"""\
+הנה סיכומים חלקיים של מספר קבוצות חדשות:
+{combined_batch_text}
+
+אחד את הסיכומים הללו לסיכום אחד תמציתי וברור.
+התמקד רק בפרטים החשובים ביותר והימנע מכפילויות.
+"""
+
+            try:
+                # Summarize the whole batch
+                batch_combined_data = {
+                    "result": {
+                        "Batch Summary": [{"text": combined_prompt}]
+                    }
+                }
+                batch_summary = summarize_json_dict_as_string(batch_combined_data)
+
+                if current_summary is None:
+                    current_summary = batch_summary
+                else:
+                    # Merge this batch summary into the current global summary
+                    final_prompt = f"""\
+להלן סיכום קיים:
+{current_summary}
+
+להלן סיכום חדש של קבוצת חדשות נוספת:
+{batch_summary}
+
+אחד את שני הסיכומים לסיכום אחד קצר וברור, מבלי לחזור על מידע.
+"""
+
+                    final_data = {
+                        "result": {
+                            "Final Summary": [{"text": final_prompt}]
+                        }
+                    }
+                    current_summary = summarize_json_dict_as_string(final_data)
+
+                logging.info(f"✅ Finished batch {batch_number}/{len(batches)}.")
+
+            except Exception as e:
+                logging.error(f"Failed to combine batch {batch_number}: {e}")
+
+            batch_number += 1
+
+            # 💤 Sleep after each batch to avoid quota limit
+            await asyncio.sleep(50)
+
+        if current_summary is None:
+            current_summary = "לא נמצאו קבוצות או הודעות לסיכום."
+
+        # Render final summary
+        return render_template_string("""
+            <!DOCTYPE html>
+            <html lang="he" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>סיכום חדשות מאוחד</title>
+            </head>
+            <body>
+                <h1>📰 סיכום חדשות מאוחד</h1>
+                <pre style="font-family: Arial, sans-serif; white-space: pre-wrap;">{{ summary|safe }}</pre>
+            </body>
+            </html>
+        """, summary=current_summary)
+
+    except Exception as e:
+        logging.error(f"Failed to summarize everything: {e}")
+        return "קרתה שגיאה בעת סיכום החדשות", 500
 
 
 

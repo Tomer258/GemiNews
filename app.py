@@ -1,13 +1,14 @@
 from quart import Quart, jsonify
 from telegram_scraper_client.client import MyTelegramClient
 import logging
+from db import db, connect_db, disconnect_db
+from datetime import datetime
 
 
 
 app = Quart(__name__)
 telegram = MyTelegramClient()
-groups =[]
-result = {}
+
 
 # Shared status message
 status_message = {"message": "Waiting for groups..."}
@@ -18,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 @app.before_serving
 async def startup():
+    await connect_db()
     try:
         await telegram.start()
         logging.info("Telegram client started successfully")
@@ -25,6 +27,10 @@ async def startup():
     except Exception as e:
         logging.error(f"Error starting Telegram client: {e}")
         status_message["message"] = f"Error: {e}"
+
+@app.after_serving
+async def shutdown():
+    await disconnect_db()
 
 
 @app.route('/')
@@ -41,8 +47,14 @@ async def get_status():
 async def get_groups():
     logging.info("Starting to fetch groups...")
     try:
-        global groups
         groups = await telegram.list_my_groups()
+
+        # Save groups into DB
+        query = """INSERT INTO chat_groups (id, name, username, type)
+                          VALUES (:id, :name, :username, :type)
+                          ON CONFLICT (id) DO NOTHING"""
+        for group in groups:
+            await db.execute(query, group)
     except Exception as e:
         logging.error(f"Failed to fetch groups: {e}")
         return jsonify({"error": str(e)}), 500
@@ -58,8 +70,8 @@ async def get_groups():
 @app.route('/msgFromGroups')
 async def get_msg_from_groups():
     try:
-        global result
-
+        result={}
+        groups = await telegram.list_my_groups()
         for group in groups:
             group_id = group['id']
             group_name = group['name']
@@ -67,6 +79,19 @@ async def get_msg_from_groups():
 
             messages = await telegram.get_recent_messages(group_id)
             result[identifier] = messages
+
+            # Save messages to DB
+            insert_query = """INSERT INTO messages (id, group_id, message_text, date)
+                                          VALUES (:id, :group_id, :text, :date)
+                                          ON CONFLICT (id) DO NOTHING"""
+            for msg in messages:
+                msg_date = datetime.fromisoformat(msg["date"]).replace(tzinfo=None)
+                await db.execute(insert_query, {
+                    "id": msg["id"],
+                    "group_id": group_id,
+                    "text": msg["text"],
+                    "date":  msg_date,
+                })
 
         return jsonify({"result": result}), 200
     except Exception as e:

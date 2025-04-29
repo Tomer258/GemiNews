@@ -14,7 +14,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # Load Gemini model
-model = genai.GenerativeModel('gemini-1.5-pro-latest')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 def summarize_json_dict_as_string(data: dict):
     """Summarize the full JSON dictionary by sending it as a big JSON string."""

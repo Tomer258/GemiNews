@@ -205,13 +205,13 @@ async def get_summarize():
             batch_number += 1
 
             # 💤 Sleep after each batch to avoid quota limit
-            await asyncio.sleep(50)
+            await asyncio.sleep(20)
 
         if current_summary is None:
             current_summary = "לא נמצאו קבוצות או הודעות לסיכום."
 
         # Render final summary
-        return render_template_string("""
+        return await render_template_string("""
             <!DOCTYPE html>
             <html lang="he" dir="rtl">
             <head>

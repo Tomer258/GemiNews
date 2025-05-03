@@ -1,9 +1,12 @@
 from quart import Quart, jsonify,render_template_string
+
+import preprocess_model
+from preprocess_model.summarizer import get_models
+from preprocess_model.summarizer_V2 import summarize_individual_batch,get_models
 from telegram_scraper_client.client import MyTelegramClient
 import logging
-from db import db, connect_db, disconnect_db
+from database_controller.db import db, connect_db, disconnect_db
 from datetime import datetime
-from preprocess_model import summarize_json_dict_as_string
 import asyncio
 
 
@@ -104,6 +107,23 @@ def batch_groups(groups, batch_size=5):
     for i in range(0, len(groups), batch_size):
         yield groups[i:i + batch_size]
 
+@app.route('/models')
+async def get_models():
+    models = get_models()
+    return await render_template_string("""
+                <!DOCTYPE html>
+                <html lang="he" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>MODELS</title>
+                </head>
+                <body>
+                    <h1>MODELS </h1>
+                    <pre style="font-family: Arial, sans-serif; white-space: pre-wrap;">{{ summary|safe }}</pre>
+                </body>
+                </html>
+            """, summary=models)
+
 
 @app.route('/result')
 async def get_summarize():
@@ -147,7 +167,7 @@ async def get_summarize():
 
                 try:
                     # Summarize this group
-                    group_summary = summarize_json_dict_as_string(group_data)
+                    group_summary = preprocess_model.summarizer_V2.summarize_json_dict_as_string(group_data)
                     batch_summaries.append(group_summary)
 
                     logging.info(f"Summarized group: {identifier}")
@@ -160,12 +180,12 @@ async def get_summarize():
 
             # Create a "batch combine" prompt
             combined_prompt = f"""\
-הנה סיכומים חלקיים של מספר קבוצות חדשות:
-{combined_batch_text}
-
-אחד את הסיכומים הללו לסיכום אחד תמציתי וברור.
-התמקד רק בפרטים החשובים ביותר והימנע מכפילויות.
-"""
+            הנה סיכומים חלקיים של מספר קבוצות חדשות:
+            {combined_batch_text}
+            
+            אחד את הסיכומים הללו לסיכום אחד תמציתי וברור.
+            התמקד רק בפרטים החשובים ביותר והימנע באופן מוחלט מכפילויות.
+            """
 
             try:
                 # Summarize the whole batch
@@ -174,28 +194,28 @@ async def get_summarize():
                         "Batch Summary": [{"text": combined_prompt}]
                     }
                 }
-                batch_summary = summarize_json_dict_as_string(batch_combined_data)
+                batch_summary = preprocess_model.summarizer_V2.summarize_individual_batch(batch_combined_data)
 
                 if current_summary is None:
                     current_summary = batch_summary
                 else:
                     # Merge this batch summary into the current global summary
                     final_prompt = f"""\
-להלן סיכום קיים:
-{current_summary}
-
-להלן סיכום חדש של קבוצת חדשות נוספת:
-{batch_summary}
-
-אחד את שני הסיכומים לסיכום אחד קצר וברור, מבלי לחזור על מידע.
-"""
+                    להלן סיכום קיים:
+                    {current_summary}
+                    
+                    להלן סיכום חדש של קבוצת חדשות נוספת:
+                    {batch_summary}
+                    
+                    אחד את שני הסיכומים לסיכום אחד קצר וברור, מבלי לחזור על מידע.
+                    """
 
                     final_data = {
                         "result": {
                             "Final Summary": [{"text": final_prompt}]
                         }
                     }
-                    current_summary = summarize_json_dict_as_string(final_data)
+                    current_summary = preprocess_model.summarizer_V2.summarize_json_dict_as_string(final_data)
 
                 logging.info(f"✅ Finished batch {batch_number}/{len(batches)}.")
 
@@ -210,6 +230,7 @@ async def get_summarize():
         if current_summary is None:
             current_summary = "לא נמצאו קבוצות או הודעות לסיכום."
 
+        current_summary = preprocess_model.summarizer_V2.translate_summary_to_telegram_hebrew(current_summary)
         # Render final summary
         return await render_template_string("""
             <!DOCTYPE html>

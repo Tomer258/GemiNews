@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-TELEGRAM_BOT_KEY = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_BOT_GROUP_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_BOT_KEY = os.getenv("TELEGRAM_BOT_KEY")
+TELEGRAM_BOT_GROUP_ID = os.getenv("TELEGRAM_BOT_GROUP_ID")
 
 
 def post_to_telegram(message: str):

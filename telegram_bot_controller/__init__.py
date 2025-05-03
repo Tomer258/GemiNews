@@ -1,0 +1,1 @@
+from .bot import post_to_telegram

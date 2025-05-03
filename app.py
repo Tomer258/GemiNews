@@ -8,6 +8,7 @@ import logging
 from database_controller.db import db, connect_db, disconnect_db
 from datetime import datetime
 import asyncio
+from telegram_bot_controller import post_to_telegram
 
 
 
@@ -231,6 +232,10 @@ async def get_summarize():
             current_summary = "לא נמצאו קבוצות או הודעות לסיכום."
 
         current_summary = preprocess_model.summarizer_V2.translate_summary_to_telegram_hebrew(current_summary)
+        chunks_to_post = preprocess_model.summarizer_V2.split_summary_for_telegram(current_summary)
+        for i, msg in enumerate(chunks_to_post, 1):
+            post_to_telegram(msg)
+
         # Render final summary
         return await render_template_string("""
             <!DOCTYPE html>

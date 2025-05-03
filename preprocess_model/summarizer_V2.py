@@ -49,6 +49,8 @@ You will receive a JSON file containing news messages from various sources. Each
 
 8. If an update relates to an event older than 24 hours, mention that explicitly.
 
+9. dont give main headline. only the topics headlines!
+
 The goal: create a high-quality, readable, and concise daily news summary without omitting any important details.
     '''
 
@@ -88,6 +90,8 @@ Make the format appropriate for a Telegram chat:
 - Optional bullet points
 - Keep it easy to read and not too formal
 
+also, dont give any answer only the translated text
+
 Summary:
 '''
 
@@ -96,6 +100,28 @@ Summary:
     response = model.generate_content(contents=full_prompt)
 
     return response.text
+
+def split_summary_for_telegram(summary_text: str) -> list[str]:
+    prompt = (
+        "Take the following summary and split it into separate Telegram messages. Each message should: "
+        "Be under 4000 characters. "
+        "Be structured clearly with headings and bullet points. "
+        "Use Markdown formatting supported by Telegram (like **bold** and *italics*). "
+        "Group items by topic (e.g., פוליטיקה, ביטחון, חדשות חוץ וכו'). "
+        "Format in a way suitable for direct posting in a Telegram channel. "
+        "Return the messages as an array of strings. "
+        "Return only text, no Python functions or code at all. "
+        "Separate messages with a line containing only three dashes (---). "
+        "Include *all* relevant items for the topic in one message, without unnecessary splitting (i.e., avoid creating multiple 'continuation' messages for the same topic)"
+        "Here is the summary:\n\n"
+        + summary_text
+    )
+
+    response = model.generate_content(prompt)
+
+    # Split the response by "---"
+    messages = [msg.strip() for msg in response.text.split('---') if msg.strip()]
+    return messages
 
 
 def get_models():

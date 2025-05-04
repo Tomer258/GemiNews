@@ -95,15 +95,16 @@ async def get_summarize():
         if not current_summary:
             current_summary = "לא נמצאו קבוצות או הודעות לסיכום."
 
-        final_summary = summarizer_V2.translate_summary_to_telegram(current_summary,"Hebrew")
-        final_summary_ru = summarizer_V2.translate_summary_to_telegram(current_summary, "Russian")
+        final_summary = summarizer_V2.translate_summary_to_telegram_hebrew(current_summary)
         messages = summarizer_V2.split_summary_for_telegram(final_summary)
-        messages_ru = summarizer_V2.split_summary_for_telegram(final_summary_ru)
-
         for i, msg in enumerate(messages, 1):
+            logging.info(f"msg #{i} is: {msg[:10]}")
             post_to_telegram(msg,1)
 
+        final_summary_ru = summarizer_V2.translate_summary_to_telegram_russian(current_summary)
+        messages_ru = summarizer_V2.split_summary_for_telegram(final_summary_ru)
         for i, msg in enumerate(messages_ru, 1):
+            logging.info(f"russian msg #{i} is: {msg[:10]}")
             post_to_telegram(msg,2)
 
         logging.info("All summaries posted successfully.")

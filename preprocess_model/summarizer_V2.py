@@ -75,7 +75,7 @@ Avoid duplicates, write proper English, and focus on the core message.
     response = model.generate_content(full_prompt)
     return response.text
 
-def translate_summary_to_telegram(summary: str,lang:str):
+def translate_summary_to_telegram_hebrew(summary: str):
     """
     Translate an English news summary to fluent Hebrew and format it for Telegram.
     """
@@ -83,7 +83,35 @@ def translate_summary_to_telegram(summary: str,lang:str):
         raise TypeError("Expected a plain text summary as input.")
 
     prompt = f'''\
-Translate the following English news summary into fluent and professional {lang}.
+Translate the following English news summary into fluent and professional Hebrew.
+Make the format appropriate for a Telegram chat:
+- Use short and clean paragraphs
+- Include clear section headers
+- Optional bullet points
+- Keep it easy to read and not too formal
+
+also, dont give any answer only the translated text
+
+Summary:
+'''
+
+    full_prompt = f"{prompt}\n\n{summary}"
+
+    response = model.generate_content(contents=full_prompt)
+
+    return response.text
+
+
+
+def translate_summary_to_telegram_russian(summary: str):
+    """
+    Translate an English news summary to fluent Hebrew and format it for Telegram.
+    """
+    if not isinstance(summary, str):
+        raise TypeError("Expected a plain text summary as input.")
+
+    prompt = f'''\
+Translate the following English news summary into fluent and professional Russian.
 Make the format appropriate for a Telegram chat:
 - Use short and clean paragraphs
 - Include clear section headers

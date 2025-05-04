@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 
 class MyTelegramClient:
     def __init__(self):
-        self.client = TelegramClient("anon",API_ID, API_HASH)
+        self.client = TelegramClient(StringSession(STRING_SESSION), API_ID, API_HASH)
 
     async def start(self):
         print(">>> Connecting to Telegram...")

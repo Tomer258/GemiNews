@@ -104,19 +104,17 @@ Summary:
 
 
 def translate_summary_to_telegram_russian(summary: str):
-    """
-    Translate an English news summary to fluent Hebrew and format it for Telegram.
-    """
     if not isinstance(summary, str):
         raise TypeError("Expected a plain text summary as input.")
 
     prompt = f'''\
-Translate the following English news summary into fluent and professional Russian.
+Translate the following Hebrew news summary into fluent and professional Russian.
 Make the format appropriate for a Telegram chat:
 - Use short and clean paragraphs
 - Include clear section headers
 - Optional bullet points
 - Keep it easy to read and not too formal
+- The only language of the output should be russian, nothing else!
 
 also, dont give any answer only the translated text
 

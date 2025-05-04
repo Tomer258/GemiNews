@@ -98,13 +98,13 @@ async def get_summarize():
         final_summary = summarizer_V2.translate_summary_to_telegram_hebrew(current_summary)
         messages = summarizer_V2.split_summary_for_telegram(final_summary)
         for i, msg in enumerate(messages, 1):
-            logging.info(f"msg #{i} is: {msg[:10]}")
+            logging.info(f"msg #{i} is: {msg[:100]}")
             post_to_telegram(msg,1)
 
-        final_summary_ru = summarizer_V2.translate_summary_to_telegram_russian(current_summary)
+        final_summary_ru = summarizer_V2.translate_summary_to_telegram_russian(final_summary)
         messages_ru = summarizer_V2.split_summary_for_telegram(final_summary_ru)
         for i, msg in enumerate(messages_ru, 1):
-            logging.info(f"russian msg #{i} is: {msg[:10]}")
+            logging.info(f"russian msg #{i} is: {msg[:100]}")
             post_to_telegram(msg,2)
 
         logging.info("All summaries posted successfully.")

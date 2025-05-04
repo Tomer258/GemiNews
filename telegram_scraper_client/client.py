@@ -51,10 +51,7 @@ class MyTelegramClient:
 
         return groups_and_channels
 
-    async def get_recent_messages(self, entity, hours=24):
-        """
-        Fetch messages from the last day for a given group/channel.
-        """
+    async def get_recent_messages(self, entity, hours=8):
         now = datetime.now(timezone.utc)
         since = now - timedelta(hours=hours)
 

@@ -75,15 +75,15 @@ Avoid duplicates, write proper English, and focus on the core message.
     response = model.generate_content(full_prompt)
     return response.text
 
-def translate_summary_to_telegram_hebrew(summary: str):
+def translate_summary_to_telegram(summary: str,lang:str):
     """
     Translate an English news summary to fluent Hebrew and format it for Telegram.
     """
     if not isinstance(summary, str):
         raise TypeError("Expected a plain text summary as input.")
 
-    prompt = '''\
-Translate the following English news summary into fluent and professional Hebrew.
+    prompt = f'''\
+Translate the following English news summary into fluent and professional {lang}.
 Make the format appropriate for a Telegram chat:
 - Use short and clean paragraphs
 - Include clear section headers
@@ -109,6 +109,7 @@ def split_summary_for_telegram(summary_text: str) -> list[str]:
         "Use Markdown formatting supported by Telegram (like **bold** and *italics*). "
         "Group items by topic (e.g., פוליטיקה, ביטחון, חדשות חוץ וכו'). "
         "Format in a way suitable for direct posting in a Telegram channel. "
+        "keep only headlines that are related to a topic and not general headlines. "
         "Return the messages as an array of strings. "
         "Return only text, no Python functions or code at all. "
         "Separate messages with a line containing only three dashes (---). "

@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 telegram = MyTelegramClient()
 GROUPS_TO_FILTER = [
     2037759911, 4782122177, 1366957750, 1221094308,
-    1462170103, 1282609022, 1327700838, 1281218345, 1414072921
+    1462170103, 1282609022, 1327700838, 1281218345, 1414072921,4711287485
 ]
 
 def batch_groups(groups, batch_size=5):
@@ -95,13 +95,18 @@ async def get_summarize():
         if not current_summary:
             current_summary = "לא נמצאו קבוצות או הודעות לסיכום."
 
-        final_summary = summarizer_V2.translate_summary_to_telegram_hebrew(current_summary)
+        final_summary = summarizer_V2.translate_summary_to_telegram(current_summary,"Hebrew")
+        final_summary_ru = summarizer_V2.translate_summary_to_telegram(current_summary, "Russian")
         messages = summarizer_V2.split_summary_for_telegram(final_summary)
+        messages_ru = summarizer_V2.split_summary_for_telegram(final_summary_ru)
 
         for i, msg in enumerate(messages, 1):
-            post_to_telegram(msg)
+            post_to_telegram(msg,1)
 
-        logging.info("🎉 All summaries posted successfully.")
+        for i, msg in enumerate(messages_ru, 1):
+            post_to_telegram(msg,2)
+
+        logging.info("All summaries posted successfully.")
 
     except Exception as e:
         logging.error(f"Unhandled error in get_summarize(): {e}")

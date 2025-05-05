@@ -11,6 +11,7 @@ GROUPS_TO_FILTER = [
     1462170103, 1282609022, 1327700838, 1281218345, 1414072921,4711287485,1002596608857
 ]
 
+
 def batch_groups(groups, batch_size=5):
     for i in range(0, len(groups), batch_size):
         yield groups[i:i + batch_size]

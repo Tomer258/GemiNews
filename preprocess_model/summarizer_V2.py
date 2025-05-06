@@ -2,6 +2,8 @@ import os
 import json
 from dotenv import load_dotenv
 import google.generativeai as genai
+import ast
+
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +18,7 @@ genai.configure(api_key=api_key)
 
 # Load the model
 model = genai.GenerativeModel("gemini-2.0-flash")
+model2 = genai.GenerativeModel("gemini-1.5-flash")
 
 def summarize_json_dict_as_string(data: dict):
     """Summarize a full JSON dictionary representing multi-channel news updates."""
@@ -126,7 +129,7 @@ Summary:
     # Append the actual summary to the base prompt
     full_prompt = f"{base_prompt}\n\n{summary}"
 
-    response = model.generate_content(contents=full_prompt)
+    response = model2.generate_content(contents=full_prompt)
     return response.text.strip()
 
 
@@ -136,7 +139,7 @@ def split_summary_for_telegram(summary_text: str) -> list[str]:
         "Be under 4000 characters. "
         "Be structured clearly with headings and bullet points. "
         "Use Markdown formatting supported by Telegram (like **bold** and *italics*). "
-        "Group items by topic (e.g., פוליטיקה, ביטחון, חדשות חוץ וכו'). "
+        "Group items by topic. "
         "Format in a way suitable for direct posting in a Telegram channel. "
         "keep only headlines that are related to a topic and not general headlines. "
         "Return the messages as an array of strings. "
@@ -160,3 +163,40 @@ def get_models():
     model_names = [amodel.name for amodel in models]
     print(model_names)
     return model_names
+
+def translate_summary_to_hebrew_and_russian(summary: str, delimiter: str = "---DELIMITER---") :
+    """
+    Translates an English summary to Hebrew and Russian using Gemini.
+    Returns a single string with translations separated by the given delimiter.
+    """
+    if not isinstance(summary, str):
+        raise TypeError("Expected a plain text summary as input.")
+
+    base_prompt = f"""You are a professional translator fluent in English, Hebrew, and Russian.
+
+Translate the following English news summary into both:
+1. Hebrew
+2. Russian
+
+Return the result as a plain text with the two translations, separated by this delimiter: {delimiter}
+
+Formatting:
+- Short, clean paragraphs
+- Section headers if applicable
+- Bullet points when helpful
+- Suitable for Telegram: readable, clear, friendly tone
+
+Do NOT include any explanation, Markdown, list syntax, or extra formatting. Just the two translations separated by the delimiter.
+
+Summary to translate:
+"""
+
+    full_prompt = f"{base_prompt}\n\n{summary}"
+
+    response = model.generate_content(full_prompt)
+    parts = response.text.strip().split(delimiter, maxsplit=1)
+    if len(parts) == 2:
+        hebrew, russian = parts
+        return hebrew.strip(), russian.strip()
+
+    return "", ""

@@ -11,7 +11,7 @@ from telegram_bot_controller import post_to_telegram
 GROUPS_TO_EXCLUDE: List[int] = [
     2037759911, 4782122177, 1366957750, 1221094308,
     1462170103, 1282609022, 1327700838, 1281218345,
-    1414072921, 4711287485, 1002596608857
+    1414072921, 4711287485, 1002596608857,-4711287485
 ]
 
 BATCH_SIZE: int = 5
@@ -148,11 +148,9 @@ async def run_summarization_pipeline() -> None:
         batches = await get_filtered_groups()
         summary = await process_group_batches(batches)
 
-        summary_he = summarizer_V2.translate_summary_to_telegram_hebrew(summary)
-        await post_summary_to_telegram(summary_he, language_id=1)
-
-        summary_ru = summarizer_V2.translate_summary_to_telegram_russian(summary)
-        await post_summary_to_telegram(summary_ru, language_id=2)
+        summaries = summarizer_V2.translate_summary_to_hebrew_and_russian(summary)
+        await post_summary_to_telegram(summaries[0], language_id=1)
+        await post_summary_to_telegram(summaries[1], language_id=2)
 
         logger.info("✅ All summaries posted successfully.")
 

@@ -151,7 +151,7 @@ async def run_summarization_pipeline() -> None:
         summary_he = summarizer_V2.translate_summary_to_telegram_hebrew(summary)
         await post_summary_to_telegram(summary_he, language_id=1)
 
-        summary_ru = summarizer_V2.translate_summary_to_telegram_russian(summary_he)
+        summary_ru = summarizer_V2.translate_summary_to_telegram_russian(summary)
         await post_summary_to_telegram(summary_ru, language_id=2)
 
         logger.info("✅ All summaries posted successfully.")

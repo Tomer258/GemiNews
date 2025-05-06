@@ -107,25 +107,28 @@ def translate_summary_to_telegram_russian(summary: str):
     if not isinstance(summary, str):
         raise TypeError("Expected a plain text summary as input.")
 
-    prompt = f'''\
-Translate the following Hebrew news summary into fluent and professional Russian.
-Make the format appropriate for a Telegram chat:
-- Use short and clean paragraphs
-- Include clear section headers
-- Optional bullet points
-- Keep it easy to read and not too formal
-- The only language of the output should be russian, nothing else!
+    # Define the base prompt with instructions
+    base_prompt = """\
+You are a professional translator.
 
-also, dont give any answer only the translated text
+Translate the following English news summary into fluent, professional Russian.
+Output **only** the translated Russian text — do not include explanations, introductions, or the original English.
+
+Format for Telegram:
+- Use short paragraphs
+- Include section headers (if applicable)
+- Use bullet points where appropriate
+- Keep it clean and readable
 
 Summary:
-'''
+"""  # Note: Removed {summary} from here
 
-    full_prompt = f"{prompt}\n\n{summary}"
+    # Append the actual summary to the base prompt
+    full_prompt = f"{base_prompt}\n\n{summary}"
 
     response = model.generate_content(contents=full_prompt)
+    return response.text.strip()
 
-    return response.text
 
 def split_summary_for_telegram(summary_text: str) -> list[str]:
     prompt = (

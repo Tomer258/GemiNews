@@ -19,6 +19,7 @@ genai.configure(api_key=api_key)
 # Load the model
 model = genai.GenerativeModel("gemini-2.0-flash")
 model2 = genai.GenerativeModel("gemini-1.5-flash")
+model3 = genai.GenerativeModel("gemini-2.5-flash-preview-05-20")
 
 def summarize_json_dict_as_string(data: dict):
     """Summarize a full JSON dictionary representing multi-channel news updates."""
@@ -58,7 +59,7 @@ The goal: create a high-quality, readable, and concise daily news summary withou
     '''
 
     full_prompt = f"{prompt}\n\nHere is the JSON file:\n\n{json_string}"
-    response = model.generate_content(full_prompt)
+    response = model3.generate_content(full_prompt)
     return response.text
 
 
@@ -75,62 +76,8 @@ Avoid duplicates, write proper English, and focus on the core message.
     '''
 
     full_prompt = f"{prompt}\n\nHere is the JSON file:\n\n{json_string}"
-    response = model.generate_content(full_prompt)
+    response = model3.generate_content(full_prompt)
     return response.text
-
-def translate_summary_to_telegram_hebrew(summary: str):
-    """
-    Translate an English news summary to fluent Hebrew and format it for Telegram.
-    """
-    if not isinstance(summary, str):
-        raise TypeError("Expected a plain text summary as input.")
-
-    prompt = f'''\
-Translate the following English news summary into fluent and professional Hebrew.
-Make the format appropriate for a Telegram chat:
-- Use short and clean paragraphs
-- Include clear section headers
-- Optional bullet points
-- Keep it easy to read and not too formal
-
-also, dont give any answer only the translated text
-
-Summary:
-'''
-
-    full_prompt = f"{prompt}\n\n{summary}"
-
-    response = model.generate_content(contents=full_prompt)
-
-    return response.text
-
-
-
-def translate_summary_to_telegram_russian(summary: str):
-    if not isinstance(summary, str):
-        raise TypeError("Expected a plain text summary as input.")
-
-    # Define the base prompt with instructions
-    base_prompt = """\
-You are a professional translator.
-
-Translate the following English news summary into fluent, professional Russian.
-Output **only** the translated Russian text — do not include explanations, introductions, or the original English.
-
-Format for Telegram:
-- Use short paragraphs
-- Include section headers (if applicable)
-- Use bullet points where appropriate
-- Keep it clean and readable
-
-Summary:
-"""  # Note: Removed {summary} from here
-
-    # Append the actual summary to the base prompt
-    full_prompt = f"{base_prompt}\n\n{summary}"
-
-    response = model2.generate_content(contents=full_prompt)
-    return response.text.strip()
 
 
 def split_summary_for_telegram(summary_text: str) -> list[str]:
@@ -150,7 +97,7 @@ def split_summary_for_telegram(summary_text: str) -> list[str]:
         + summary_text
     )
 
-    response = model.generate_content(prompt)
+    response = model3.generate_content(prompt)
 
     # Split the response by "---"
     messages = [msg.strip() for msg in response.text.split('---') if msg.strip()]
@@ -193,7 +140,7 @@ Summary to translate:
 
     full_prompt = f"{base_prompt}\n\n{summary}"
 
-    response = model.generate_content(full_prompt)
+    response = model3.generate_content(full_prompt)
     parts = response.text.strip().split(delimiter, maxsplit=1)
     if len(parts) == 2:
         hebrew, russian = parts

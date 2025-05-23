@@ -97,7 +97,7 @@ def split_summary_for_telegram(summary_text: str) -> list[str]:
         + summary_text
     )
 
-    response = model3.generate_content(prompt)
+    response = model.generate_content(prompt)
 
     # Split the response by "---"
     messages = [msg.strip() for msg in response.text.split('---') if msg.strip()]

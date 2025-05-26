@@ -107,6 +107,7 @@ async def post_summary_to_telegram(summary: str, language_id: int) -> None:
     for i, message in enumerate(messages, start=1):
         logger.info(f"msg #{i} [lang {language_id}]: {message[:100]}")
         post_to_telegram(message, language_id)
+        await asyncio.sleep(10)
 
 
 async def process_group_batches(batches: List[List[Dict[str, Any]]]) -> str:

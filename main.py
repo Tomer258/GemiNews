@@ -15,7 +15,7 @@ GROUPS_TO_EXCLUDE: List[int] = [
 ]
 
 BATCH_SIZE: int = 5
-SLEEP_BETWEEN_BATCHES: int = 20  # seconds
+SLEEP_BETWEEN_BATCHES: int = 30  # seconds
 
 # Hebrew-to-English translated prompts
 PARTIAL_SUMMARIES_PROMPT = """\

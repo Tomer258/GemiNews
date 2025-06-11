@@ -154,6 +154,7 @@ async def run_summarization_pipeline() -> None:
         await post_summary_to_telegram(summaries[1], language_id=2)
 
         logger.info("✅ All summaries posted successfully.")
+        logger.info(f"Tokens used:{summarizer_V2.total_tokens}")
 
     except Exception as e:
         logger.exception(f"❌ Pipeline error: {e}")

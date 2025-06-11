@@ -20,9 +20,11 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.0-flash")
 model2 = genai.GenerativeModel("gemini-1.5-flash")
 model3 = genai.GenerativeModel("gemini-2.5-flash-preview-05-20")
+total_tokens = 0
 
 def summarize_json_dict_as_string(data: dict):
     """Summarize a full JSON dictionary representing multi-channel news updates."""
+    global total_tokens
     if not isinstance(data, dict):
         raise TypeError("Expected a Python dict object.")
 
@@ -60,11 +62,13 @@ The goal: create a high-quality, readable, and concise daily news summary withou
 
     full_prompt = f"{prompt}\n\nHere is the JSON file:\n\n{json_string}"
     response = model3.generate_content(full_prompt)
+    total_tokens += response.usage_metadata.total_token_count
     return response.text
 
 
 def summarize_individual_batch(data: dict):
     """Quick summary of messages from a single news source."""
+    global total_tokens
     if not isinstance(data, dict):
         raise TypeError("Expected a Python dict object.")
 
@@ -77,10 +81,12 @@ Avoid duplicates, write proper English, and focus on the core message.
 
     full_prompt = f"{prompt}\n\nHere is the JSON file:\n\n{json_string}"
     response = model3.generate_content(full_prompt)
+    total_tokens += response.usage_metadata.total_token_count
     return response.text
 
 
 def split_summary_for_telegram(summary_text: str) -> list[str]:
+    global total_tokens
     prompt = (
         "Take the following summary and split it into separate Telegram messages. Each message should: "
         "Be under 4000 characters. "
@@ -98,6 +104,7 @@ def split_summary_for_telegram(summary_text: str) -> list[str]:
     )
 
     response = model.generate_content(prompt)
+    total_tokens += response.usage_metadata.total_token_count
 
     # Split the response by "---"
     messages = [msg.strip() for msg in response.text.split('---') if msg.strip()]
@@ -116,6 +123,7 @@ def translate_summary_to_hebrew_and_russian(summary: str, delimiter: str = "---D
     Translates an English summary to Hebrew and Russian using Gemini.
     Returns a single string with translations separated by the given delimiter.
     """
+    global total_tokens
     if not isinstance(summary, str):
         raise TypeError("Expected a plain text summary as input.")
 
@@ -141,6 +149,7 @@ Summary to translate:
     full_prompt = f"{base_prompt}\n\n{summary}"
 
     response = model3.generate_content(full_prompt)
+    total_tokens += response.usage_metadata.total_token_count
     parts = response.text.strip().split(delimiter, maxsplit=1)
     if len(parts) == 2:
         hebrew, russian = parts

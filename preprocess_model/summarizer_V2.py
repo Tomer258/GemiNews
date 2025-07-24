@@ -148,7 +148,7 @@ Summary to translate:
 
     full_prompt = f"{base_prompt}\n\n{summary}"
 
-    response = model3.generate_content(full_prompt)
+    response = model.generate_content(full_prompt)
     total_tokens += response.usage_metadata.total_token_count
     parts = response.text.strip().split(delimiter, maxsplit=1)
     if len(parts) == 2:

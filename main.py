@@ -16,6 +16,7 @@ GROUPS_TO_EXCLUDE: List[int] = [
 
 BATCH_SIZE: int = 5
 SLEEP_BETWEEN_BATCHES: int = 30  # seconds
+SLEEP_BETWEEN_GROUPS: int = 10  # seconds
 
 # Hebrew-to-English translated prompts
 PARTIAL_SUMMARIES_PROMPT = """\
@@ -81,10 +82,12 @@ async def summarize_group(group: Dict[str, Any]) -> Optional[str]:
         input_data = {"result": {group_name: messages}}
         summary = summarizer_V2.summarize_json_dict_as_string(input_data)
         logger.info(f"✅ Summarized group: {group_name}")
+        await asyncio.sleep(SLEEP_BETWEEN_GROUPS)
         return summary
     except Exception as e:
         logger.error(f"❌ Failed to summarize {group_name}: {e}")
         return None
+
 
 
 def combine_batch_summaries(summaries: List[str]) -> str:
